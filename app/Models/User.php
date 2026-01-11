@@ -6,17 +6,19 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
+    protected $guarded = ['id'];
     protected $fillable = [
         'name',
         'email',
@@ -44,5 +46,40 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function gamification()
+    {
+        return $this->hasOne(UserGamification::class);
+    }
+
+    // 2. Settings (Target harian, Focus duration)
+    public function settings()
+    {
+        return $this->hasOne(UserSetting::class);
+    }
+
+    // 3. Avatar yang sedang dipakai
+    public function equippedAvatar()
+    {
+        return $this->belongsTo(Item::class, 'equipped_avatar_id');
+    }
+
+    // 4. Progress Stage (Mana yang udah unlock/selesai)
+    public function stageProgress()
+    {
+        return $this->hasMany(UserStageProgress::class);
+    }
+
+    // 5. Inventory Item
+    public function inventory()
+    {
+        return $this->hasMany(UserItem::class);
+    }
+
+    // 6. Log Pomodoro
+    public function pomodoroLogs()
+    {
+        return $this->hasMany(PomodoroLog::class);
     }
 }
