@@ -24,6 +24,7 @@ Route::get('/stages/{id}', [StageController::class, 'show']);
 // --- USER & DASHBOARD ---
 Route::get('/user', [UserController::class, 'me']);
 Route::get('/histories', [UserController::class, 'history']);
+Route::get('/leaderboard', [UserController::class, 'leaderboard']);
 
 // --- FLASHCARDS / DICTIONARY ---
 Route::get('/flashcards', [FlashcardController::class, 'index']);
