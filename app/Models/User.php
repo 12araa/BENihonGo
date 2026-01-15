@@ -82,4 +82,11 @@ class User extends Authenticatable
     {
         return $this->hasMany(PomodoroLog::class);
     }
+
+    public function items()
+    {
+        return $this->belongsToMany(Item::class, 'user_items')
+                    ->withPivot('is_equipped') 
+                    ->withTimestamps();
+    }
 }

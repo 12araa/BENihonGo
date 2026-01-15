@@ -5,41 +5,49 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
 use App\Models\User;
+use App\Models\UserGamification;
 use Illuminate\Http\Request;
+use App\Models\UserSetting;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
     public function me()
     {
-        // MOCK: Kita ambil user pertama aja (Tanaka)
-        $user = User::with(['equippedAvatar', 'gamification'])->first();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
 
-        // 2. Logika Cerdas (Real Data with Fallback)
-        $avatarPath = $user->equippedAvatar
-            ? $user->equippedAvatar->asset_path
-            : 'assets/avatars/headband.png';
+        $user->load(['gamification', 'setting', 'items' => function ($query) {
+            $query->wherePivot('is_equipped', true);
+        }]);
 
-        // Cek Gamification: Kalau belum ada data di tabel gamification, kasih nilai awal.
-        $level = $user->gamification ? $user->gamification->current_level : 1;
-        $gold = $user->gamification ? $user->gamification->gold : 0;
-        $xp = $user->gamification ? $user->gamification->current_xp : 0; // Sesuaikan nama kolom DB nanti
+        $equippedAvatar = $user->items->first();
+        $avatarPath = $equippedAvatar ? $equippedAvatar->asset_path : 'assets/avatars/headband.png';
+
+        $currentLevel = $user->gamification->current_level ?? 1;
+        $maxXp = $currentLevel * 100;
 
         return response()->json([
             'success' => true,
+            'message' => 'Berhasil mengambil data user',
             'data' => [
-                // Data Asli User
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
-                'role' => $user->role,
+                'avatar' => $avatarPath,
 
-                // Data Game (Dinamis)
-                'level' => $level,
-                'xp' => $xp,
-                'max_xp' => 100, // Nanti bisa dibikin rumus: $level * 100
-                'gold' => $gold,
+                'gamification' => [
+                    'level' => $currentLevel,
+                    'gold' => $user->gamification->gold ?? 0,
+                    'total_xp' => $user->gamification->total_xp ?? 0,
+                    'max_xp' => $maxXp,
+                ],
 
-                'avatar' => asset($avatarPath)
+                'daily_progress' => [
+                    'current' => $user->gamification->today_xp ?? 0,
+                    'target' => $user->setting->daily_target_exp ?? 100,
+                    'is_target_reached' => ($user->gamification->today_xp ?? 0) >= ($user->setting->daily_target_exp ?? 100)
+                ],
             ]
         ]);
     }
@@ -82,28 +90,103 @@ class UserController extends Controller
 
     public function leaderboard()
     {
-        $users = User::with('gamification')->get();
+        $topUsers = UserGamification::with(['user.items' => function ($query) {
+                $query->wherePivot('is_equipped', true);
+            }])
+            ->orderByDesc('total_xp')
+            ->limit(10)
+            ->get();
 
-        // Urutkan: Siapa yang XP-nya paling tinggi dia di atas
-        // Kita pakai sortByDesc dari Collection Laravel
-        $sortedUsers = $users->sortByDesc(function ($user) {
-            return $user->gamification ? $user->gamification->current_xp : 0;
-        })->values();
+        $leaderboard = $topUsers->map(function ($data, $index) {
 
-        $data = $sortedUsers->map(function ($user, $index) {
+            $equippedAvatar = $data->user->items->first();
+
+            $avatarPath = $equippedAvatar
+                ? $equippedAvatar->asset_path
+                : 'assets/avatars/headband.png';
+
             return [
                 'rank' => $index + 1,
-                'name' => $user->name,
-                'level' => $user->gamification ? $user->gamification->current_level : 1,
-                'xp' => $user->gamification ? $user->gamification->current_xp : 0,
-                'avatar' => $user->equippedAvatar ? asset($user->equippedAvatar->asset_path)
-                            : asset('assets/avatars/headband.png'),
+                'name' => $data->user->name,
+                'level' => $data->current_level,
+                'total_xp' => $data->total_xp,
+                'avatar' => $avatarPath,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => $data
+            'message' => 'Berhasil mengambil leaderboard',
+            'data' => $leaderboard
+        ]);
+    }
+
+    public function submitOnboarding(Request $request){
+
+        $request->validate([
+            'focus_duration' => 'required|integer|min:5|max:60',
+            'daily_target_exp' => 'required|integer|min:10',
+        ]);
+
+        $user = Auth::user();
+
+        $setting = UserSetting::updateOrCreate(
+            ['user_id' => $user->id],
+            [
+                'focus_duration' => $request->focus_duration,
+                'daily_target_exp' => $request->daily_target_exp,
+            ]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Preferensi berhasil disimpan!',
+            'data' => $setting
+        ]);
+    }
+
+    public function updateProfile(Request $request)
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+        ]);
+
+        $user->update([
+            'name' => $request->name,
+            'email' => $request->email,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Profil berhasil diperbarui!',
+            'data' => $user
+        ]);
+    }
+
+    public function inventory()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $inventory = $user->items->map(function ($item) {
+            return [
+                'id' => $item->id,
+                'name' => $item->name,
+                'type' => $item->type,
+                'image_path' => $item->asset_path,
+
+                'is_equipped' => (bool) $item->pivot->is_equipped,
+                'purchased_at' => $item->pivot->created_at,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $inventory
         ]);
     }
 }

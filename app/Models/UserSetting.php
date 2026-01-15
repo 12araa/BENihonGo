@@ -10,6 +10,12 @@ class UserSetting extends Model
     use HasFactory;
     protected $guarded = ['id'];
 
+    protected $fillable = [
+        'user_id',
+        'focus_duration',
+        'daily_target',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);

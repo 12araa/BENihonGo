@@ -5,52 +5,92 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
-    // POST /api/login
-    public function login(Request $request)
+    public function register(Request $request)
     {
-        // Frontend kirim: { "email": "player@gmail.com", "password": "password123" }
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
 
-        // MOCK: Kita tidak cek password beneran.
-        // Pokoknya kalau ada emailnya, kita anggap login sukses.
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User tidak ditemukan'], 401);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validasi Gagal',
+                'errors' => $validator->errors()
+            ], 422);
         }
 
-        // Return token palsu (dummy token)
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        $token = $user->createToken('auth_token')->plainTextToken;
+
         return response()->json([
             'success' => true,
-            'message' => 'Login Berhasil (Mock)',
-            'token' => 'dummy-token-xyz-123',
-            'user' => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'email' => $user->email,
-                'role' => $user->role,
+            'message' => 'Registrasi Berhasil!',
+            'data' => [
+                'user' => $user,
+                'access_token' => $token,
+                'token_type' => 'Bearer'
+            ]
+        ], 201);
+    }
+
+    public function login(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['success'=> false, 'message' => 'Email/Password harus diisi'], 422);
+        }
+
+        $user = User::where('email', $request->email)->first();
+
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Login gagal, email atau password salah.'
+            ], 401);
+        }
+
+        $user->tokens()->delete();
+        $token = $user->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Login Berhasil!',
+            'data' => [
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                ],
+                'access_token' => $token,
+                'token_type' => 'Bearer'
             ]
         ]);
     }
 
-    // POST /api/register
-    public function register(Request $request)
+    public function logout(Request $request)
     {
-        // MOCK: Pura-pura sukses daftar
-        return response()->json([
-            'success' => true,
-            'message' => 'Registrasi Berhasil! Silakan Login.',
-        ]);
-    }
+        $request->user()->currentAccessToken()->delete();
 
-    // POST /api/logout
-    public function logout()
-    {
         return response()->json([
             'success' => true,
-            'message' => 'Logout Berhasil',
+            'message' => 'Logout Berhasil'
         ]);
     }
 }
