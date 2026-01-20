@@ -9,8 +9,8 @@ class Quiz extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+    protected $fillable = ['stage_id', 'question', 'options', 'correct_answer'];
 
-    // Cast options agar otomatis jadi Array/JSON
     protected $casts = [
         'options' => 'array',
     ];

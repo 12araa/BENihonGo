@@ -30,8 +30,5 @@ class FlashcardSeeder extends Seeder
                 'audio_path' => null
             ]);
         }
-        // === MATERI GRADE 2 (Stage ID: 2) ===
-        Flashcard::create(['stage_id' => 2, 'kanji' => '人', 'romaji' => 'Hito', 'meaning' => 'Orang']);
-        Flashcard::create(['stage_id' => 2, 'kanji' => '口', 'romaji' => 'Kuchi', 'meaning' => 'Mulut']);
     }
 }

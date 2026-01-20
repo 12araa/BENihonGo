@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Chapter;
 use App\Models\Stage;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -13,22 +14,22 @@ class StageSeeder extends Seeder
      */
     public function run(): void
     {
-        $grades = [
-            ['name' => 'Grade 1', 'level_req' => 1, 'desc' => 'Kanji Dasar Angka & Hari'],
-            ['name' => 'Grade 2', 'level_req' => 3, 'desc' => 'Kanji Alam & Manusia'],
-            ['name' => 'Grade 3', 'level_req' => 5, 'desc' => 'Kanji Sekolah & Waktu'],
-            ['name' => 'Grade 4', 'level_req' => 10, 'desc' => 'Kanji Kata Kerja Dasar'],
-            ['name' => 'Grade 5', 'level_req' => 15, 'desc' => 'Kanji Kata Sifat'],
-            ['name' => 'Grade 6', 'level_req' => 20, 'desc' => 'Kanji Arah & Lokasi'],
-            ['name' => 'Grade 7', 'level_req' => 25, 'desc' => 'Kanji Abstrak & Sosial'],
-        ];
-
-        foreach ($grades as $index => $grade) {
-            Stage::create([
-                'name' => $grade['name'],
-                'level_req' => $grade['level_req'],
-                'monster_id' => $index + 1,
+        $chapter = Chapter::first();
+        if (!$chapter) {
+            $chapter = Chapter::create([
+                'title' => 'Bab 1: Permulaan',
+                'chapter_number' => 1
             ]);
         }
+        Stage::create([
+            'chapter_id' => $chapter->id,
+            'monster_id' => 1,
+            'name' => 'Hari apa hari ini?',
+            'description' => 'Kanji Dasar Hari dan Angka',
+            'stage_number' => 1,
+            'level_req' => 1,
+            'is_boss_level' => false,
+            'is_active' => true,
+        ]);
     }
 }

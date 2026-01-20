@@ -9,6 +9,22 @@ class Stage extends Model
 {
     use HasFactory;
     protected $guarded = ['id'];
+    protected $fillable = [
+        'chapter_id',
+        'name',
+        'description',
+        'stage_number',
+        'level_req',
+        'is_boss_level',
+        'monster_id',
+        'image_path',
+        'is_active'
+    ];
+
+    public function chapter()
+    {
+        return $this->belongsTo(Chapter::class);
+    }
 
     public function monster()
     {
