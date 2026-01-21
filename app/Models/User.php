@@ -54,7 +54,7 @@ class User extends Authenticatable
     }
 
     // 2. Settings (Target harian, Focus duration)
-    public function settings()
+    public function setting()
     {
         return $this->hasOne(UserSetting::class);
     }
@@ -86,7 +86,7 @@ class User extends Authenticatable
     public function items()
     {
         return $this->belongsToMany(Item::class, 'user_items')
-                    ->withPivot('is_equipped') 
+                    ->withPivot('is_equipped')
                     ->withTimestamps();
     }
 }

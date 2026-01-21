@@ -3,34 +3,23 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Item;
-use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use App\Services\ShopService;
+use Exception;
 
 class ShopController extends Controller
 {
-    // 1. GET /api/shop
-    // Menampilkan daftar semua item yang dijual
+    protected $shopService;
+
+    public function __construct(ShopService $shopService)
+    {
+        $this->shopService = $shopService;
+    }
+
     public function index()
     {
-        $items = Item::all();
-
-        // MOCK: Kita asumsikan user (Tanaka) sedang login
-        // Supaya Frontend tau mana item yang "Sudah Dibeli" vs "Belum"
-        // Nanti logika real-nya pakai Auth::user()
-        $user = User::first();
-        $ownedItemIds = $user->inventory->pluck('item_id')->toArray();
-
-        $data = $items->map(function($item) use ($ownedItemIds) {
-            return [
-                'id' => $item->id,
-                'name' => $item->name,
-                'type' => $item->type,
-                'price' => $item->price,
-                'image' => asset($item->asset_path),
-                'is_owned' => in_array($item->id, $ownedItemIds), // True kalo udah punya
-            ];
-        });
+        $data = $this->shopService->getShopItems(Auth::user());
 
         return response()->json([
             'success' => true,
@@ -38,47 +27,44 @@ class ShopController extends Controller
         ]);
     }
 
-    // 2. POST /api/shop/buy
-    // Melakukan pembelian item
     public function buy(Request $request)
     {
-        // Request: { "item_id": 1 }
+        $request->validate(['item_id' => 'required|integer']);
 
-        $item = Item::find($request->item_id);
-        if (!$item) return response()->json(['message' => 'Item not found'], 404);
+        try {
+            $result = $this->shopService->buyItem(Auth::user(), $request->item_id);
 
-        // MOCK LOGIC:
-        // Kita pura-pura user punya uang 1000 Gold.
-        // Kalau harga item > 1000, gagal. Kalau cukup, sukses.
-        $mockUserGold = 1000;
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil membeli {$result['item_name']}!",
+                'data' => ['current_gold' => $result['remaining_gold']]
+            ]);
 
-        if ($item->price > $mockUserGold) {
+        } catch (Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Gold tidak cukup!',
+                'message' => $e->getMessage()
             ], 400);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => "Berhasil membeli {$item->name}!",
-            'data' => [
-                'remaining_gold' => $mockUserGold - $item->price,
-                'item_purchased' => $item->name
-            ]
-        ]);
     }
 
-    // 3. POST /api/shop/equip
-    // Memakai item (Ganti Avatar)
     public function equip(Request $request)
     {
-        // Request: { "item_id": 2 }
+        $request->validate(['item_id' => 'required|integer']);
 
-        // MOCK LOGIC: Selalu berhasil
-        return response()->json([
-            'success' => true,
-            'message' => 'Avatar berhasil diganti!',
-        ]);
+        try {
+            $this->shopService->equipItem(Auth::user(), $request->item_id);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Item berhasil dipasang!'
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 400);
+        }
     }
 }

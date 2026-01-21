@@ -3,74 +3,73 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Flashcard;
-use App\Models\Stage;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Stage;
+use App\Models\UserGamification;
+use App\Models\UserStageProgress;
+use App\Models\BattleHistory;
+use App\Services\GameService;
 
 class GameController extends Controller
 {
-    public function startGame($stage_id)
+    protected $gameService;
+
+    public function __construct(GameService $gameService)
     {
-        $stage = Stage::with('monster')->find($stage_id);
+        $this->gameService = $gameService;
+    }
+
+    public function startGame($id)
+    {
+        $stage = Stage::with(['monster', 'chapter'])->find($id);
 
         if (!$stage) {
-            return response()->json(['message' => 'Stage not found'], 404);
+            return response()->json(['success' => false, 'message' => 'Stage tidak ditemukan'], 404);
         }
 
-        // Ambil 5 soal acak
-        $flashcards = Flashcard::inRandomOrder()->limit(5)->get();
-
-        // Format Soal
-        $questions = $flashcards->map(function($card) {
-            return [
-                'id' => $card->id,
-                'type' => 'flashcard',
-                'question' => $card->kanji,
-                'correct_answer' => $card->meaning,
-                // Mocking options (Nanti bisa dibikin lebih pintar)
-                'options' => [
-                    $card->meaning,
-                    'Kuda',
-                    'Mobil',
-                    'Pesawat'
-                ]
-            ];
-        });
+        $quizzes = \App\Models\Quiz::where('stage_id', $id)
+                    ->inRandomOrder()
+                    ->take(10)
+                    ->get();
 
         return response()->json([
             'success' => true,
             'data' => [
-                'stage_info' => [
-                    'id' => $stage->id,
-                    'name' => $stage->name,
-                    'level_req' => $stage->level_req,
-                    'monster' => [
-                        'name' => $stage->monster->name,
-                        'hp' => $stage->monster->base_hp,
-                        // Perbaikan: Pakai asset_path & damage_per_hit sesuai migration kamu
-                        'damage' => $stage->monster->damage_per_hit,
-                        'image' => asset($stage->monster->asset_path),
-                    ]
-                ],
-                'questions' => $questions
+                'stage' => $stage,
+                'quizzes' => $quizzes
             ]
         ]);
     }
 
-    // 2. POST /api/game/finish (MOCK)
     public function finishGame(Request $request)
     {
-        // Frontend kirim: { "stage_id": 1, "score": 100, "is_win": true }
-
-        // Kita anggap user selalu dapat reward segini dulu
-        return response()->json([
-            'success' => true,
-            'message' => 'Game finished!',
-            'data' => [
-                'xp_earned' => 50,
-                'gold_earned' => 20,
-                'is_level_up' => false, // Pura-pura belum naik level
-            ]
+        $request->validate([
+            'stage_id' => 'required|exists:stages,id',
+            'score' => 'required|integer',
+            'is_completed' => 'required|boolean',
         ]);
+
+        try {
+            $result = $this->gameService->processGameResult(
+                Auth::user(),
+                $request->stage_id,
+                $request->score,
+                $request->boolean('is_completed')
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Game selesai!',
+                'data' => $result
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

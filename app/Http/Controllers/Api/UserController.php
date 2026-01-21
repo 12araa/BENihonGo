@@ -52,44 +52,23 @@ class UserController extends Controller
         ]);
     }
 
-    // 6. GET /api/histories
     public function history()
     {
-        // MOCK DATA SEMENTARA
-       $mockHistory = [
-            [
-                'id' => 101,
-                'user_id' => 1,
-                'stage_id' => 1,
-                'is_unlocked' => true,
-                'is_completed' => true,
-                'best_score' => 100,
-
-                'stage_name' => 'Grade 1: Kanji Dasar',
-                'stars' => 3,
-            ],
-            [
-                'id' => 102,
-                'user_id' => 1,
-                'stage_id' => 2,
-                'is_unlocked' => true,
-                'is_completed' => false,
-                'best_score' => 45,
-
-                // Info tambahan
-                'stage_name' => 'Grade 2: Kata Benda',
-                'stars' => 1,
-            ]
-        ];
+        $history = \App\Models\BattleHistory::with('stage')
+                    ->where('user_id', Auth::id())
+                    ->orderBy('created_at', 'desc')
+                    ->limit(20)
+                    ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $mockHistory
+            'data' => $history
         ]);
     }
 
-    public function leaderboard()
+public function leaderboard()
     {
+        $userId = Auth::id();
         $topUsers = UserGamification::with(['user.items' => function ($query) {
                 $query->wherePivot('is_equipped', true);
             }])
@@ -97,27 +76,51 @@ class UserController extends Controller
             ->limit(10)
             ->get();
 
-        $leaderboard = $topUsers->map(function ($data, $index) {
+            $leaderboardData = $topUsers->map(function ($data, $index) use ($userId) {
+            $user = $data->user;
 
-            $equippedAvatar = $data->user->items->first();
-
-            $avatarPath = $equippedAvatar
-                ? $equippedAvatar->asset_path
-                : 'assets/avatars/headband.png';
+            $equippedAvatar = $user->items->first();
+            $avatarPath = $equippedAvatar ? $equippedAvatar->asset_path : 'assets/avatars/headband.png';
 
             return [
                 'rank' => $index + 1,
-                'name' => $data->user->name,
+                'name' => $user->name,
                 'level' => $data->current_level,
                 'total_xp' => $data->total_xp,
                 'avatar' => $avatarPath,
+                'is_me' => $user->id === $userId
             ];
         });
+
+        $myGamification = UserGamification::where('user_id', $userId)->first();
+        $myRankData = null;
+
+        if ($myGamification) {
+            $higherRankCount = UserGamification::where('total_xp', '>', $myGamification->total_xp)->count();
+            $myRank = $higherRankCount + 1;
+
+            /** @var \App\Models\User $me */
+            $me = Auth::user();
+            $me->load(['items' => function ($q) { $q->wherePivot('is_equipped', true); }]);
+            $myAvatarItem = $me->items->first();
+            $myAvatarPath = $myAvatarItem ? $myAvatarItem->asset_path : 'assets/avatars/headband.png';
+
+            $myRankData = [
+                'rank' => $myRank,
+                'name' => $me->name,
+                'level' => $myGamification->level,
+                'total_xp' => $myGamification->total_xp,
+                'avatar' => $myAvatarPath,
+            ];
+        }
 
         return response()->json([
             'success' => true,
             'message' => 'Berhasil mengambil leaderboard',
-            'data' => $leaderboard
+            'data' => [
+                'leaderboard' => $leaderboardData,
+                'user_rank' => $myRankData 
+            ]
         ]);
     }
 
