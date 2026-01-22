@@ -16,15 +16,15 @@ class MonsterSeeder extends Seeder
         $monsters = [
             [
                 'name' => 'Slime Hijau',
-                'asset_path' => 'assets/monsters/slimeHijau.png',
+                'asset_path' => 'storage/assets/monsters/slimeHijau.png',
                 'base_hp' => 50,
                 'damage_per_hit' => 5,
-                'exp_reward' => 10,    
+                'exp_reward' => 10,
                 'gold_reward' => 5,
             ],
             [
                 'name' => 'Slime Merah',
-                'asset_path' => 'assets/monsters/slimeMerah.png',
+                'asset_path' => 'storage/assets/monsters/slimeMerah.png',
                 'base_hp' => 75,
                 'damage_per_hit' => 10,
                 'exp_reward' => 20,
@@ -32,7 +32,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Kelelawar',
-                'asset_path' => 'assets/monsters/bat.png',
+                'asset_path' => 'storage/assets/monsters/bat.png',
                 'base_hp' => 100,
                 'damage_per_hit' => 15,
                 'exp_reward' => 30,
@@ -40,7 +40,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Golem Batu',
-                'asset_path' => 'assets/monsters/golem.png',
+                'asset_path' => 'storage/assets/monsters/golem.png',
                 'base_hp' => 200,
                 'damage_per_hit' => 10,
                 'exp_reward' => 50,
@@ -48,7 +48,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Golem Batu Merah',
-                'asset_path' => 'assets/monsters/golemMerah.png',
+                'asset_path' => 'storage/assets/monsters/golemMerah.png',
                 'base_hp' => 300,
                 'damage_per_hit' => 15,
                 'exp_reward' => 80,
@@ -56,7 +56,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Monster Pohon',
-                'asset_path' => 'assets/monsters/monsterTree.png',
+                'asset_path' => 'storage/assets/monsters/monsterTree.png',
                 'base_hp' => 450,
                 'damage_per_hit' => 20,
                 'exp_reward' => 120,
@@ -64,7 +64,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Raja Iblis',
-                'asset_path' => 'assets/monsters/demon.png',
+                'asset_path' => 'storage/assets/monsters/demon.png',
                 'base_hp' => 650,
                 'damage_per_hit' => 35,
                 'exp_reward' => 500,

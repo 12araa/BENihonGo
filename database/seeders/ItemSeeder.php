@@ -17,14 +17,14 @@ class ItemSeeder extends Seeder
             'name' => 'Novice Headband',
             'type' => 'avatar',
             'price' => 0,
-            'asset_path' => 'avatars/headband.png'
+            'asset_path' => 'storage/assets/avatars/headband.png'
         ]);
 
         Item::create([
             'name' => 'Samurai Helmet',
             'type' => 'avatar',
             'price' => 500,
-            'asset_path' => 'avatars/samurai_helm.png'
+            'asset_path' => 'storage/assets/avatars/samurai_helm.png'
         ]);
     }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Chapter;
 use App\Models\Flashcard;
+use App\Models\Monster;
 use App\Models\Quiz;
 use App\Models\Stage;
 use Illuminate\Http\Request;
@@ -106,7 +107,15 @@ class AdminController extends Controller
             'level_req' => 'integer',
             'monster_id' => 'required|exists:monsters,id',
             'is_boss_level' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
+
+        $imageDbPath = 'storage/assets/stages/default.png';
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('public/assets/stages');
+            $imageDbPath = str_replace('public/', 'storage/', $path);
+        }
 
         $stage = Stage::create([
             'chapter_id' => $request->chapter_id,
@@ -116,7 +125,7 @@ class AdminController extends Controller
             'level_req' => $request->level_req ?? 1,
             'monster_id' => $request->monster_id,
             'is_boss_level' => $request->boolean('is_boss_level'),
-            'image_path' => 'assets/stages/default.png',
+            'image_path' => $imageDbPath,
         ]);
 
         return response()->json([
@@ -163,9 +172,22 @@ class AdminController extends Controller
             'stage_number' => 'integer',
             'monster_id' => 'exists:monsters,id',
             'is_boss_level' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
         ]);
 
-        $stage->update($request->all());
+        $dataToUpdate = $request->except(['image']);
+
+        if ($request->hasFile('image')) {
+            if ($stage->image_path && $stage->image_path !== 'storage/assets/stages/default.png') {
+                $oldPath = str_replace('storage/', 'public/', $stage->image_path);
+                \Illuminate\Support\Facades\Storage::delete($oldPath);
+            }
+
+            $path = $request->file('image')->store('public/assets/stages');
+            $dataToUpdate['image_path'] = str_replace('public/', 'storage/', $path);
+        }
+
+        $stage->update($dataToUpdate);
 
         return response()->json([
             'success' => true,
@@ -226,15 +248,22 @@ class AdminController extends Controller
             'kanji' => 'required|string',
             'romaji' => 'required|string',
             'meaning' => 'required|string',
-            'audio' => 'nullable|file|mimes:mp3,wav'
+            'audio' => 'nullable|file|mimes:mp3,wav|max:2048'
         ]);
+
+        $audioDbPath = null;
+
+        if ($request->hasFile('audio')) {
+            $path = $request->file('audio')->store('public/assets/audio');
+            $audioDbPath = str_replace('public/', 'storage/', $path);
+        }
 
         $flashcard = Flashcard::create([
             'stage_id' => $request->stage_id,
             'kanji' => $request->kanji,
             'romaji' => $request->romaji,
             'meaning' => $request->meaning,
-            'audio_path' => null,
+            'audio_path' => $audioDbPath,
         ]);
 
         return response()->json([
@@ -259,7 +288,18 @@ class AdminController extends Controller
             'audio' => 'file|mimes:mp3,wav'
         ]);
 
-        $flashcard->update($request->all());
+        $dataToUpdate = $request->except(['audio']);
+
+        if ($request->hasFile('audio')) {
+            if ($flashcard->audio_path) {
+                $oldPath = str_replace('storage/', 'public/', $flashcard->audio_path);
+                \Illuminate\Support\Facades\Storage::delete($oldPath);
+            }
+            $path = $request->file('audio')->store('public/assets/audio');
+            $dataToUpdate['audio_path'] = str_replace('public/', 'storage/', $path);
+        }
+
+        $flashcard->update($dataToUpdate);
 
         return response()->json([
             'success' => true,
@@ -396,7 +436,7 @@ class AdminController extends Controller
     // ==========================================
     public function indexMonsters()
     {
-        $monsters = \App\Models\Monster::all();
+        $monsters = Monster::all();
 
         return response()->json([
             'success' => true,
@@ -413,17 +453,24 @@ class AdminController extends Controller
             'damage_per_hit' => 'required|integer',
             'exp_reward' => 'required|integer',
             'gold_reward' => 'required|integer',
-            'asset_path' => 'nullable|string',
+            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
         ]);
 
-        $monster = \App\Models\Monster::create([
+        $imageDbPath = 'storage/assets/monsters/default.png';
+
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('public/assets/monsters');
+            $imageDbPath = str_replace('public/', 'storage/', $path);
+        }
+
+        $monster = Monster::create([
             'name' => $request->name,
             'base_hp' => $request->base_hp,
             'attack_interval_ms' => $request->attack_interval_ms,
             'damage_per_hit' => $request->damage_per_hit,
             'exp_reward' => $request->exp_reward,
             'gold_reward' => $request->gold_reward,
-            'asset_path' => $request->asset_path ?? 'assets/monsters/default.png',
+            'asset_path' => $imageDbPath,
         ]);
 
         return response()->json([
@@ -435,7 +482,7 @@ class AdminController extends Controller
 
     public function showMonster($id)
     {
-        $monster = \App\Models\Monster::find($id);
+        $monster = Monster::find($id);
 
         if (!$monster) {
             return response()->json(['success' => false, 'message' => 'Monster tidak ditemukan'], 404);
@@ -449,7 +496,7 @@ class AdminController extends Controller
 
     public function updateMonster(Request $request, $id)
     {
-        $monster = \App\Models\Monster::find($id);
+        $monster = Monster::find($id);
 
         if (!$monster) {
             return response()->json(['success' => false, 'message' => 'Monster tidak ditemukan'], 404);
@@ -462,10 +509,22 @@ class AdminController extends Controller
             'damage_per_hit' => 'integer',
             'exp_reward' => 'integer',
             'gold_reward' => 'integer',
-            'asset_path' => 'string',
+            'image' => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
         ]);
 
-        $monster->update($request->all());
+        $dataToUpdate = $request->except(['image', 'asset_path']);
+
+        if ($request->hasFile('image')) {
+            if ($monster->asset_path && $monster->asset_path !== 'storage/assets/monsters/default.png') {
+                 $oldPath = str_replace('storage/', 'public/', $monster->asset_path);
+                 \Illuminate\Support\Facades\Storage::delete($oldPath);
+            }
+
+            $path = $request->file('image')->store('public/assets/monsters');
+            $dataToUpdate['asset_path'] = str_replace('public/', 'storage/', $path);
+        }
+
+        $monster->update($dataToUpdate);
 
         return response()->json([
             'success' => true,
@@ -473,10 +532,9 @@ class AdminController extends Controller
             'data' => $monster
         ]);
     }
-
     public function destroyMonster($id)
     {
-        $monster = \App\Models\Monster::find($id);
+        $monster = Monster::find($id);
 
         if (!$monster) {
             return response()->json(['success' => false, 'message' => 'Monster tidak ditemukan'], 404);

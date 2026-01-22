@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\FlashcardController;
 use App\Http\Controllers\Api\GameController;
+use App\Http\Controllers\Api\PomodoroController;
 use App\Http\Controllers\Api\ShopController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\StageController;
@@ -31,7 +32,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/game/finish', [GameController::class, 'finishGame']);
 
     // --- POMODORO ---
-    // Route::post('/pomodoro', [PomodoroController::class, 'store']); // Simpan log fokus
+    Route::post('/pomodoro/start', [PomodoroController::class, 'start']);
+    Route::post('/pomodoro/stop', [PomodoroController::class, 'stop']);
 
     // --- SHOP ---
     Route::get('/shop', [ShopController::class, 'index']); // Lihat Toko
