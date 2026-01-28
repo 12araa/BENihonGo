@@ -128,6 +128,37 @@ Endpoint ini bersifat publik (tidak membutuhkan token Bearer).
 ### Start Game (Load Stage) 🔒
 - **URL:** `http://localhost:8000/api/game/start/{stage_id}`
 - **Method:** `GET`
+- **Logic:**
+  1. Cecek saldo tiket user.
+  2. Jika `tickets < 1`, return Error **403**.
+  3. Jika aman, `tickets - 1`, lalu return data soal.
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "data": {
+        "stage": {
+            "id": 1,
+            "name": "Gerbang Hutan",
+            "monster": { "name": "Slime", "hp": 100 }
+        },
+        "quizzes": [
+            { "id": 1, "question": "..." }
+        ],
+        "remaining_tickets": 2
+    }
+}
+```
+
+**Error Response (403 Forbidden - Tiket Habis):**
+```json
+{
+    "success": false,
+    "message": "Tiket habis! Silakan belajar (Pomodoro) dulu.",
+    "error_code": "NO_TICKETS"
+}
+```
 
 > **💡 Note:** Endpoint ini akan mengembalikan data Soal (Quizzes) dan Monster. Frontend simpan data ini di State lokal untuk menjalankan game.
 
@@ -175,6 +206,31 @@ Backend bertindak sebagai Stopwatch Server-Side.
 > - Kirim `completed` jika waktu habis.
 > - Kirim `interrupted` jika user stop manual di tengah jalan.
 > - Backend akan otomatis menghitung durasi dan memberikan XP.
+
+**Success Response (200 OK):**
+```json
+{
+    "success": true,
+    "message": "Sesi Pomodoro berakhir.",
+    "data": {
+        "log": {
+            "id": 101,
+            "duration": 25,
+            "status": "completed"
+        },
+        "rewards": {
+            "xp": 50,
+            "gold": 25,
+            "tickets": 1,
+            "minutes": 25
+        },
+        "current_balance": {
+            "total_tickets": 3,
+            "total_gold": 150
+        }
+    }
+}
+```
 
 ---
 ## 🛒 5. Shop & Inventory
