@@ -5,11 +5,8 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use App\Models\Stage;
-use App\Models\UserGamification;
-use App\Models\UserStageProgress;
-use App\Models\BattleHistory;
+use App\Models\Quiz;
 use App\Services\GameService;
 
 class GameController extends Controller
@@ -23,13 +20,22 @@ class GameController extends Controller
 
     public function startGame($id)
     {
+        $user = Auth::user();
+        if ($user->gamification->tickets < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tiket habis! Silakan belajar (Pomodoro) dulu.'
+            ], 403);
+        }
+
         $stage = Stage::with(['monster', 'chapter'])->find($id);
 
         if (!$stage) {
             return response()->json(['success' => false, 'message' => 'Stage tidak ditemukan'], 404);
         }
 
-        $quizzes = \App\Models\Quiz::where('stage_id', $id)
+        $user->gamification->decrement('tickets');
+        $quizzes = Quiz::where('stage_id', $id)
                     ->inRandomOrder()
                     ->take(10)
                     ->get();
@@ -38,7 +44,8 @@ class GameController extends Controller
             'success' => true,
             'data' => [
                 'stage' => $stage,
-                'quizzes' => $quizzes
+                'quizzes' => $quizzes,
+                'remaining_tickets' => $user->gamification->tickets
             ]
         ]);
     }

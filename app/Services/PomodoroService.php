@@ -10,7 +10,7 @@ use Carbon\Carbon;
 class PomodoroService
 {
     const XP_PER_MINUTE = 2;
-    const GOLD_PER_MINUTE = 1;
+    const GOLD_PER_MINUTE = 10;
 
     public function startSession($user)
     {
@@ -45,28 +45,38 @@ class PomodoroService
             $endTime = Carbon::now();
             $startTime = Carbon::parse($log->start_time);
 
-        $minutesFloat = $startTime->floatDiffInMinutes($endTime);
+            $minutesFloat = $startTime->floatDiffInMinutes($endTime);
 
-        $actualMinutes = (int) round($minutesFloat);
+            $actualMinutes = (int) round($minutesFloat);
 
-        if ($actualMinutes < 1) {
-            $actualMinutes = 0;
-            $status = 'interrupted';
-        }
+            if ($actualMinutes < 1) {
+                $actualMinutes = 0;
+                $status = 'interrupted';
+            }
 
-        $xpEarned = $actualMinutes * self::XP_PER_MINUTE;
-        $goldEarned = $actualMinutes * self::GOLD_PER_MINUTE;
+            $ticketsEarned = 0;
 
-        $log->update([
-            'end_time' => $endTime,
-            'total_minutes' => $actualMinutes, 
-            'status' => $status,
-            'earned_exp' => $xpEarned,
-            'earned_gold' => $goldEarned
-        ]);
+            if ($status === 'completed') {
+                if ($actualMinutes >= 50) {
+                    $ticketsEarned = 2;
+                } elseif ($actualMinutes >= 25) {
+                    $ticketsEarned = 1;
+                }
+            }
 
-            if ($xpEarned > 0) {
-                $this->updateUserStats($user, $xpEarned, $goldEarned);
+            $xpEarned = $actualMinutes * self::XP_PER_MINUTE;
+            $goldEarned = $actualMinutes * self::GOLD_PER_MINUTE;
+
+            $log->update([
+                'end_time' => $endTime,
+                'total_minutes' => $actualMinutes,
+                'status' => $status,
+                'earned_exp' => $xpEarned,
+                'earned_gold' => $goldEarned
+            ]);
+
+            if ($xpEarned > 0 || $ticketsEarned > 0) {
+                $this->updateUserStats($user, $xpEarned, $goldEarned, $ticketsEarned);
             }
 
             return [
@@ -74,17 +84,19 @@ class PomodoroService
                 'rewards' => [
                     'xp' => $xpEarned,
                     'gold' => $goldEarned,
+                    'tickets' => $ticketsEarned,
                     'minutes' => $actualMinutes
                 ]
             ];
         });
     }
 
-    private function updateUserStats($user, $xp, $gold)
+    private function updateUserStats($user, $xp, $gold, $tickets)
     {
         $gamification = UserGamification::firstOrCreate(['user_id' => $user->id]);
 
         $gamification->gold += $gold;
+        $gamification->tickets += $tickets;
         $gamification->total_xp += $xp;
         $gamification->today_xp += $xp;
 

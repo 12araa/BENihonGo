@@ -19,6 +19,7 @@ class UserGamification extends Model
         'last_played_date',
         'current_level',
         'gold',
+        'tickets',
         'break_tokens',
         'current_streak',
     ];
