@@ -9,6 +9,8 @@ class Chapter extends Model
 {
     use HasFactory;
 
+    protected $guarded = ['id'];
+
     protected $fillable = ['title', 'chapter_number', 'is_active'];
 
     public function stages()
