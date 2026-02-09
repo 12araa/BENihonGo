@@ -100,12 +100,12 @@ class PomodoroService
         $gamification->total_xp += $xp;
         $gamification->today_xp += $xp;
 
-        $currentLevel = $gamification->level ?? 1;
+        $currentLevel = $gamification->current_level ?? 1;
         $newLevel = floor(sqrt($gamification->total_xp / 20));
         if ($newLevel < 1) $newLevel = 1;
 
         if ($newLevel > $currentLevel) {
-            $gamification->level = $newLevel;
+            $gamification->current_level = $newLevel;
         }
 
         $gamification->save();
