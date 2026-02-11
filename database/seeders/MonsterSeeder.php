@@ -16,7 +16,7 @@ class MonsterSeeder extends Seeder
         $monsters = [
             [
                 'name' => 'Slime Hijau',
-                'asset_path' => 'https://imgur.com/a/ypPStg4',
+                'asset_path' => 'https://drive.google.com/file/d/1J35FNm6drHmeAYGkya_gWT-cDcsFnG_0/view?usp=drive_link',
                 'base_hp' => 50,
                 'damage_per_hit' => 5,
                 'exp_reward' => 10,
@@ -24,7 +24,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Slime Merah',
-                'asset_path' => 'https://imgur.com/a/0EpMF2k',
+                'asset_path' => 'https://drive.google.com/file/d/1u_F_8z9ZUGuxhs3A36NqTo9vPgXR-i_A/view?usp=drive_link',
                 'base_hp' => 75,
                 'damage_per_hit' => 10,
                 'exp_reward' => 20,
@@ -32,7 +32,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Kelelawar',
-                'asset_path' => 'https://imgur.com/a/aSbWA9F',
+                'asset_path' => 'https://drive.google.com/file/d/1DWUs49TXsnPDyb63hXZShiTFA6b7MqJr/view?usp=drive_link',
                 'base_hp' => 100,
                 'damage_per_hit' => 15,
                 'exp_reward' => 30,
@@ -40,7 +40,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Golem Batu',
-                'asset_path' => 'https://imgur.com/a/vW3fCh3',
+                'asset_path' => 'https://drive.google.com/file/d/1kGdjBhDqtgyOBUgSV6AYfLN0DaeHPF-a/view?usp=sharing',
                 'base_hp' => 200,
                 'damage_per_hit' => 10,
                 'exp_reward' => 50,
@@ -48,7 +48,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Golem Batu Merah',
-                'asset_path' => 'https://imgur.com/a/K6UNNML',
+                'asset_path' => 'https://drive.google.com/file/d/1oiyhscWPCkX0dka8FvjkUNSZtdb7Lm4l/view?usp=drive_link',
                 'base_hp' => 300,
                 'damage_per_hit' => 15,
                 'exp_reward' => 80,
@@ -56,7 +56,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Monster Pohon',
-                'asset_path' => 'https://imgur.com/a/dOvBn8E',
+                'asset_path' => 'https://drive.google.com/file/d/1rF-IowMBg_4KedPBNE-t4np76iDqLjxA/view?usp=drive_link',
                 'base_hp' => 450,
                 'damage_per_hit' => 20,
                 'exp_reward' => 120,
@@ -64,7 +64,7 @@ class MonsterSeeder extends Seeder
             ],
             [
                 'name' => 'Raja Iblis',
-                'asset_path' => 'https://imgur.com/a/1HdF1So',
+                'asset_path' => 'https://drive.google.com/file/d/1Yd0ebhW10BocbrACEoJNkgA8K015FYHQ/view?usp=drive_link',
                 'base_hp' => 650,
                 'damage_per_hit' => 35,
                 'exp_reward' => 500,
